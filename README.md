@@ -6,7 +6,7 @@ Download the entire repo upfront to skip video loading
 git clone https://github.com/ernestchu/hsa
 cd hsa
 git checkout gh-pages
-cd ../
+cd ..
 npx -y serve
 ```
 
