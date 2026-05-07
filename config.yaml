@@ -1,0 +1,50 @@
+---
+t2v:
+  - id: a14b
+    name: Wan2.2-T2V-A14B
+    link: https://huggingface.co/Wan-AI/Wan2.2-T2V-A14B
+    labels:
+      - Flow Matching
+      - HSA (Ours)
+  - id: 14b
+    name: Wan2.1-T2V-14B
+    link: https://huggingface.co/Wan-AI/Wan2.1-T2V-14B
+    labels:
+      - Flow Matching
+      - TeaCache
+      - HSA (Ours)
+i2v:
+  - id: a14b
+    name: Wan2.2-I2V-A14B
+    link: https://huggingface.co/Wan-AI/Wan2.2-I2V-A14B
+    labels:
+      - Flow Matching
+      - HSA (Ours)
+  - id: 14b
+    name: Wan2.1-I2V-14B-480P
+    link: https://huggingface.co/Wan-AI/Wan2.1-I2V-14B-480P
+    labels:
+      - Flow Matching
+      - TeaCache
+      - HSA (Ours)
+t2av:
+  - id: ltx2
+    name: LTX-2
+    link: https://huggingface.co/Lightricks/LTX-2
+    paths:
+      - fm
+      - hsa
+    labels:
+      - Flow Matching
+      - HSA (Ours)
+i2av:
+  - id: ltx2
+    name: LTX-2
+    link: https://huggingface.co/Lightricks/LTX-2
+    paths:
+      - fm
+      - hsa
+    labels:
+      - Flow Matching
+      - HSA (Ours)
+...

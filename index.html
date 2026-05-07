@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heterogeneous Step Allocation</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/js-yaml@4/dist/js-yaml.min.js"></script>
+
+    <style>
+      body {
+        background-color: #ffffff;
+        /* pure white */
+        color: #0f172a;
+        /* slate-900 */
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+      }
+    </style>
+  </head>
+
+  <body class="font-sans antialiased min-h-screen flex flex-col items-center p-6 lg:p-10">
+
+    <div id="app" class="w-full max-w-7xl mx-auto flex flex-col gap-8" v-cloak>
+
+      <!-- Project Intro -->
+      <div class="flex flex-col gap-6 text-center max-w-5xl mx-auto mt-2 mb-2">
+        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
+          Not All Tokens Need 40 Steps: Heterogeneous Step Allocation in Diffusion Transformers for Efficient Video Generation
+        </h1>
+        <p class="text-slate-700 text-sm md:text-base leading-relaxed text-justify">
+          <strong>TL;DR</strong> Human vision ignores vast amounts of redundant motion. Why, then, do video generators treat every spatiotemporal token with equal priority? We propose HSA that assigns varying step budgets to different spatiotemporal tokens.
+        </p>
+
+        <div class="border border-green-500 p-4 text-left rounded-lg shadow-sm">
+          <p class="text-slate-800 text-sm md:text-base mb-3">
+            <strong>Tip:</strong> Download the entire website upfront to skip video loading (need <a href="https://nodejs.org" target="_blank" class="text-blue-800 hover:underline">node</a>):
+          </p>
+          <div class="relative bg-green-50 rounded-md p-3 mb-3 group">
+            <button class="absolute top-2 right-2 border border-green-500 text-green-500 hover:text-white hover:bg-green-500 rounded px-2 py-1 text-xs transition-colors opacity-0 group-hover:opacity-100" onclick="navigator.clipboard.writeText('git clone git clone https://github.com/ernestchu/hsa\ncd hsa\ngit checkout gh-pages\nnpx -y serve'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 2000)">
+              Copy
+            </button>
+            <pre class="text-sm font-mono overflow-x-auto"><code>git clone https://github.com/ernestchu/hsa
+cd hsa
+git checkout gh-pages
+npx -y serve</code></pre>
+          </div>
+          <p class="text-slate-800 text-sm md:text-base">
+            Then goto <a href="http://localhost:3000" target="_blank" class="text-blue-800 hover:underline">http://localhost:3000</a>
+          </p>
+        </div>
+        <!-- <div class="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-slate-100 py-3"> -->
+        <!--   <h2 class="max-w-5xl mx-auto font-bold text-slate-800 text-xl text-center px-6 lg:px-10">Abstract</h2> -->
+        <!-- </div> -->
+        <p class="text-slate-700 text-sm md:text-base leading-relaxed text-justify">
+          Diffusion Transformers (DiTs) have achieved state-of-the-art video generation quality, but they incur immense computational cost because standard inference applies the same number of denoising steps uniformly to every token in the sequence. It is well known that human vision ignores vast amounts of redundant motion. Why, then, do our densest models treat every spatiotemporal token with equal priority? In this paper, we introduce Heterogeneous Step Allocation (HSA), a training-free inference algorithm that assigns varying step budgets to different spatiotemporal tokens based on their velocity dynamics. To resolve the resulting sequence-length mismatch without sacrificing global context, HSA introduces a KV-cache synchronization mechanism that allows active tokens to attend to the full sequence while entirely bypassing inactive tokens. Furthermore, we derive a cached Euler update that advances the latent states of skipped tokens in a single operation without additional model evaluations. We evaluate HSA on the Wan-2 and LTX-2 models for both text-to-video (T2V) and image-to-video (I2V) generation. Our results demonstrate that HSA significantly outperforms previous state-of-the-art caching methods and the vanilla Flow Matching baseline, especially at aggressive acceleration regimes (e.g., 50% and 25% runtimes). Crucially, HSA achieves a superior quality-runtime Pareto frontier without the need for expensive offline profiling, robustly preserving structural integrity and generation quality even under tight computational budgets.
+        </p>
+        <div class='w-full flex justify-center'>
+          <img src="system.jpg" alt="System Overview" class="w-full max-w-3xl h-auto" />
+        </div>
+        <div class="w-screen relative left-1/2 right-1/2 -mx-[50vw] bg-slate-100 py-3 mt-8">
+          <h2 class="max-w-5xl mx-auto font-bold text-slate-800 text-xl text-center px-6 lg:px-10">Video comparison</h2>
+        </div>
+        <p class="text-slate-700 text-sm md:text-base leading-relaxed text-justify">
+          Use our video comaprison tool below to compare videos generated by HSA against the reference with 40 steps. For T2V, we randomly sample 2 prompts in each dimension of <a href="https://vchitect.github.io/VBench-project/" target="_blank" class="text-blue-800 hover:underline">VBench</a>. For I2V, we randomly sample 20 image-text pairs in <a href="https://vchitect.github.io/VBench-project/" target="_blank" class="text-blue-800 hover:underline">VBench++</a>. LTX-2 prompts are sourced from their <a href="https://ltx.io/model/model-blog/prompting-guide-for-ltx-2" target="_blank" class="text-blue-800 hover:underline">official website</a>, and LTX-2 I2V uses the same prompts but conditions on the first frame from the videos on the website.
+        </p>
+      </div>
+
+      <!-- Header & Controls -->
+      <header ref="headerEl"
+          class="glass-panel py-2 px-4 rounded-xl shadow-xl flex flex-row items-center justify-between gap-2 md:gap-3 sticky top-4 z-50">
+        <div class="flex items-center gap-3">
+          <h1
+              class="hidden lg:block text-lg font-extrabold bg-clip-text">
+            Hetergenous Step Allocation
+          </h1>
+        </div>
+
+        <!-- Mode Toggle (T2V / I2V / T2AV) -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 ml-auto md:ml-0">
+          <button @click="mode = 't2v'"
+             :class="mode === 't2v' ? 'bg-blue-800 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'"
+             class="px-3 py-1 text-xs rounded font-bold transition-all duration-200">
+            T2V
+          </button>
+          <button @click="mode = 'i2v'"
+             :class="mode === 'i2v' ? 'bg-blue-800 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'"
+             class="px-3 py-1 text-xs rounded font-bold transition-all duration-200">
+            I2V
+          </button>
+          <button @click="mode = 't2av'"
+             :class="mode === 't2av' ? 'bg-blue-800 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'"
+             class="px-3 py-1 text-xs rounded font-bold transition-all duration-200">
+            T2AV
+          </button>
+          <button @click="mode = 'i2av'"
+             :class="mode === 'i2av' ? 'bg-blue-800 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'"
+             class="px-3 py-1 text-xs rounded font-bold transition-all duration-200">
+            I2AV
+          </button>
+        </div>
+
+        <!-- Video Navigation -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+          <button @click="prev" :disabled="currentIndex === 0"
+             class="p-1 rounded hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+              </path>
+            </svg>
+          </button>
+          <div class="text-center min-w-[70px]">
+            <span class="text-xs font-semibold text-slate-700">{{ currentIndex + 1 }} / {{ videos.length
+              }}</span>
+          </div>
+          <button @click="next" :disabled="currentIndex === videos.length - 1"
+                  class="p-1 rounded hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+            <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Acceleration Toggle -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+          <span class="px-2 text-xs font-bold">Runtime</span>
+          <button v-for="acc in ['25', '50', '75']" :key="acc" @click="setAcceleration(acc)"
+                  :class="acceleration === acc ? 'bg-blue-800 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'"
+                  class="px-3 py-1 text-xs rounded font-bold transition-all duration-200">
+            {{ acc }}%
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Video Content -->
+      <main class="w-full flex flex-col gap-16 pb-4">
+        <section v-for="(section, idx) in sections" :key="section.id" :ref="el => section.sectionEl = el" :style="section.lockedHeight ? { height: section.lockedHeight + 'px' } : {}" class="flex flex-col gap-6 w-full">
+          <div class="flex justify-between items-end border-b border-slate-200 pb-2">
+            <h2 class="text-2xl font-bold tracking-wide text-slate-800"><a :href="section.link" target="_blank">{{ section.name }}</a></h2>
+            <div class="flex gap-4 text-sm font-semibold tracking-wider text-slate-500 uppercase">
+              <span class="text-cyan-600">Reference (100%)</span>
+              <span>vs</span>
+              <span class="text-blue-800">Accelerated</span>
+            </div>
+          </div>
+
+          <div v-if="!currentVideo" class="text-center text-slate-400 py-10">Loading...</div>
+
+          <div v-else class="flex flex-col gap-6">
+            <!-- Vanilla Slider -->
+            <input type="range" min="5" max="95" v-model="section.sliderPos" @input="section.lockedHeight = null"
+                                                 class="w-full accent-blue-800 cursor-pointer h-2 bg-slate-200 rounded-lg" />
+
+            <!-- Videos Side by Side -->
+            <div class="flex flex-row w-full gap-2 md:gap-4 items-stretch justify-center">
+              <!-- Left Label -->
+              <div class="flex flex-col justify-center items-end text-sm md:text-base font-bold tracking-wide text-right whitespace-nowrap py-4">
+                <span class="text-cyan-600 uppercase">Reference</span>
+                <span class="text-slate-500">Flow Matching<br/>(T=40)</span>
+              </div>
+
+              <!-- Videos -->
+              <div class="flex flex-row flex-1 gap-2 md:gap-4 items-center justify-center">
+                <!-- Left Video (Reference) -->
+                <div class="flex-shrink-0" :style="{ width: `calc(${section.sliderPos}% - 8px)` }">
+                  <video v-if="mode.endsWith('av')" :ref="el => section.refEl = el"
+                         class="w-full h-auto max-h-[80vh] object-contain rounded-lg shadow-md cursor-pointer transition-all duration-200 box-border"
+                         :class="activeAudio === section.id + '_ref' ? 'border-[4px] border-green-500' : 'border border-slate-200'"
+                         @click="setActiveAudio(section.id + '_ref')"
+                         :muted="activeAudio !== section.id + '_ref'"
+                         :src="'quali_videos/' + mode + '_' + section.id + '_100/' + currentVideo" autoplay loop
+                         playsinline></video>
+
+                  <video v-else :ref="el => section.refEl = el"
+                         class="w-full h-auto max-h-[80vh] object-contain rounded-lg shadow-md border border-slate-200"
+                         :src="'quali_videos/' + mode + '_' + section.id + '_100/' + currentVideo" muted autoplay loop
+                         playsinline></video>
+                </div>
+                
+                <!-- Right Video(s) (Accelerated) -->
+                <div class="flex-shrink-0" :style="{ width: `calc(${100 - section.sliderPos}% - 8px)` }">
+                  
+                  <div v-if="mode.endsWith('av')" class="flex flex-col gap-2 w-full" :ref="el => section.accEl = el">
+                    <video v-for="(path, idx) in section.paths" :key="path"
+                           :ref="el => { if (el) section.accEls[idx] = el }"
+                           class="w-full h-auto max-h-[39vh] object-contain rounded-lg shadow-md cursor-pointer transition-all duration-200 box-border"
+                           :class="activeAudio === section.id + '_acc_' + idx ? 'border-[4px] border-green-500' : 'border border-slate-200'"
+                           @click="setActiveAudio(section.id + '_acc_' + idx)"
+                           :muted="activeAudio !== section.id + '_acc_' + idx"
+                           :src="'quali_videos/' + mode + '_' + section.id + '_' + acceleration + '/' + path + '/' + currentVideo" 
+                           autoplay loop playsinline></video>
+                  </div>
+
+                  <video v-else :ref="el => section.accEl = el"
+                         class="w-full h-auto max-h-[80vh] object-contain rounded-lg shadow-md border border-slate-200"
+                         :src="'quali_videos/' + mode + '_' + section.id + '_' + acceleration + '/' + currentVideo" muted
+                         autoplay loop playsinline></video>
+                </div>
+              </div>
+
+              <!-- Right Label -->
+              <div :style="section.height ? { height: section.height + 'px' } : {}"
+                   class="flex flex-col justify-around items-start self-center text-sm md:text-base font-bold text-blue-800 tracking-wide whitespace-nowrap">
+                <span v-for="label in section.labels" :key="label">{{ label }}</span>
+              </div>
+            </div>
+            
+            <div v-if="mode.endsWith('av')" class="text-center text-sm text-green-600 font-semibold animate-pulse">
+              * Click on any video to play its audio
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- Footer -->
+      <footer ref="footerEl" @click="showPromptModal = true"
+          :class="isFooterVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'"
+          class="glass-panel py-2 px-4 rounded-xl flex items-center justify-between shadow-2xl sticky bottom-4 z-50 mt-4 cursor-pointer hover:bg-slate-50 transition-all duration-300">
+        <div class="flex items-center gap-3 text-xs font-mono text-slate-500 min-w-0">
+          <span class="uppercase tracking-widest font-semibold text-slate-400">Viewing</span>
+          <span class="text-slate-300">|</span>
+          <span class="text-xs text-slate-400 truncate">{{ currentPrompt }}</span>
+        </div>
+      </footer>
+
+      <!-- Filename Modal -->
+      <div v-if="showPromptModal" @click.self="showPromptModal = false"
+           class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4 cursor-pointer">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-3xl w-full break-all border border-slate-200 cursor-auto relative">
+          <button @click="showPromptModal = false" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+          <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Full Prompt</h3>
+          <p class="text-slate-800 font-mono text-sm md:text-base leading-relaxed selection:bg-blue-200">{{ currentPrompt }}</p>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      const { createApp, ref, computed, onMounted, watch, watchEffect, nextTick, onUnmounted } = Vue;
+
+      createApp({
+        setup() {
+          const mode = ref('t2v'); // 't2v', 'i2v', 't2av', or 'i2av'
+          const videosT2v = ref([]);
+          const videosI2v = ref([]);
+          const videosT2av = ref([]);
+          const videosI2av = ref([]);
+          const sectionsData = ref([]);
+          const currentIndex = ref(0);
+          const acceleration = ref('25');
+          const activeAudio = ref(null);
+          const sections = ref([]);
+          const showPromptModal = ref(false);
+          const promptMap = ref({});
+          const headerEl = ref(null);
+          const footerEl = ref(null);
+          const isFooterVisible = ref(false);
+
+          const checkFooterVisibility = () => {
+            if (headerEl.value && footerEl.value) {
+              const hRect = headerEl.value.getBoundingClientRect();
+              const fRect = footerEl.value.getBoundingClientRect();
+              isFooterVisible.value = hRect.bottom < fRect.top;
+            }
+          };
+
+          const unlockAllHeights = () => {
+            sections.value.forEach(section => {
+              section.lockedHeight = null;
+            });
+          };
+
+          const onResize = () => {
+            checkFooterVisibility();
+            unlockAllHeights();
+          };
+
+          const lockAllHeights = () => {
+            sections.value.forEach(section => {
+              if (section.sectionEl) {
+                section.lockedHeight = section.sectionEl.getBoundingClientRect().height;
+              }
+            });
+          };
+
+          const setModeSections = () => {
+            sections.value = sectionsData.value[mode.value].map(s => ({
+              ...s,
+              sliderPos: 50,
+              height: null,
+              refEl: null,
+              accEl: null,
+              accEls: []
+            }));
+          };
+
+          watchEffect((onCleanup) => {
+            const observers = [];
+            sections.value.forEach((section) => {
+              const el = section.accEl;
+              if (el) {
+                const ro = new ResizeObserver(([entry]) => {
+                  section.height = entry.contentRect.height;
+                });
+                ro.observe(el);
+                observers.push(ro);
+              }
+            });
+            onCleanup(() => {
+              observers.forEach(ro => ro.disconnect());
+            });
+          }, { flush: 'post' });
+
+          onMounted(async () => {
+            window.addEventListener('scroll', checkFooterVisibility, { passive: true });
+            window.addEventListener('resize', onResize, { passive: true });
+            nextTick(checkFooterVisibility);
+            try {
+              const [resT2v, resI2v, resT2av, resI2av, config, resPromptMap] = await Promise.all([
+                fetch('video-list-t2v.txt').catch(() => null),
+                fetch('video-list-i2v.txt').catch(() => null),
+                fetch('video-list-t2av.txt').catch(() => null),
+                fetch('video-list-i2av.txt').catch(() => null),
+                fetch('config.yaml').catch(() => null),
+                fetch('prompt_map.json').catch(() => null)
+              ]);
+
+              if (resT2v && resT2v.ok) {
+                const text = await resT2v.text();
+                videosT2v.value = text.split('\n').filter(v => v.trim() !== '');
+              }
+
+              if (resI2v && resI2v.ok) {
+                const text = await resI2v.text();
+                videosI2v.value = text.split('\n').filter(v => v.trim() !== '');
+              }
+
+              if (resT2av && resT2av.ok) {
+                const text = await resT2av.text();
+                videosT2av.value = text.split('\n').filter(v => v.trim() !== '');
+              }
+
+              if (resI2av && resI2av.ok) {
+                const text = await resI2av.text();
+                videosI2av.value = text.split('\n').filter(v => v.trim() !== '');
+              }
+
+              if (config && config.ok) {
+                const text = await config.text();
+                const parsed = jsyaml.load(text);
+                sectionsData.value = parsed;
+                setModeSections();
+              }
+
+              if (resPromptMap && resPromptMap.ok) {
+                promptMap.value = await resPromptMap.json();
+              }
+            } catch (e) {
+              console.error('Error fetching data:', e);
+            }
+          });
+
+          const videos = computed(() => {
+            if (mode.value === 't2v') return videosT2v.value;
+            if (mode.value === 'i2v') return videosI2v.value;
+            if (mode.value === 't2av') return videosT2av.value;
+            if (mode.value === 'i2av') return videosI2av.value;
+            return [];
+          });
+
+          const currentVideo = computed(() => videos.value[currentIndex.value] || '');
+          const currentFilename = computed(() => {
+            if (!currentVideo.value) return '';
+            const parts = currentVideo.value.split('/');
+            return parts[parts.length - 1];
+          });
+          const currentPrompt = computed(() => {
+            const filename = currentFilename.value;
+            return promptMap.value[filename] || filename;
+          });
+
+          const syncVideos = () => {
+            nextTick(() => {
+              sections.value.forEach(section => {
+                const els = [section.refEl];
+                if (mode.value === 't2av') {
+                  els.push(...(section.accEls || []));
+                } else {
+                  els.push(section.accEl);
+                }
+                els.forEach(v => {
+                  if (v) {
+                    v.currentTime = 0;
+                    v.play().catch(e => console.log('Autoplay blocked', e));
+                  }
+                });
+              });
+            });
+          };
+
+          watch(currentIndex, () => {
+            lockAllHeights();
+            syncVideos();
+          });
+          
+          watch(acceleration, () => {
+            lockAllHeights();
+            syncVideos();
+          });
+
+          watch(mode, () => {
+            currentIndex.value = 0; // Reset index when switching modes
+            activeAudio.value = null; // Reset audio when mode changes
+            setModeSections();
+            syncVideos();
+          });
+          
+          const setActiveAudio = (id) => {
+            activeAudio.value = (activeAudio.value === id)? null: id;
+          };
+
+          const next = () => {
+            if (currentIndex.value < videos.value.length - 1) currentIndex.value++;
+          };
+
+          const prev = () => {
+            if (currentIndex.value > 0) currentIndex.value--;
+          };
+
+          const setAcceleration = (val) => acceleration.value = val;
+
+          onUnmounted(() => {
+            window.removeEventListener('scroll', checkFooterVisibility);
+            window.removeEventListener('resize', onResize);
+          });
+
+          return {
+            headerEl,
+            footerEl,
+            isFooterVisible,
+            mode,
+            videos,
+            currentIndex,
+            acceleration,
+            currentVideo,
+            currentFilename,
+            currentPrompt,
+            activeAudio,
+            setActiveAudio,
+            next,
+            prev,
+            setAcceleration,
+            sections,
+            showPromptModal
+          };
+        }
+      }).mount('#app');
+    </script>
+
+  </body>
+
+</html>

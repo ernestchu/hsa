@@ -1,0 +1,22 @@
+scene/cemetery-0.mp4
+scene/street-0.mp4
+multiple_objects/a fork and a potted plant-0.mp4
+multiple_objects/a bowl and a remote-0.mp4
+human_action/A person is knitting-0.mp4
+human_action/A person is washing dishes-0.mp4
+appearance_style/Gwen Stacy reading a book, pixel art-0.mp4
+appearance_style/Gwen Stacy reading a book, surrealism style-0.mp4
+temporal_flickering/A tranquil tableau of in the Zen garden, a perfectly raked gravel path led to a serene rock garden-0.mp4
+temporal_flickering/A tranquil tableau of beside a tranquil pond, a weeping willow tree draped its branches gracefully over the water's surface, creating a serene tableau of reflection and calm-0.mp4
+temporal_style/A boat sailing leisurely along the Seine River with the Eiffel Tower in background, in super slow motion-0.mp4
+temporal_style/Gwen Stacy reading a book, in super slow motion-0.mp4
+object_class/a handbag-0.mp4
+object_class/a sandwich-0.mp4
+color/a blue umbrella-0.mp4
+color/a purple bicycle-0.mp4
+overall_consistency/Flying through fantasy landscapes.-0.mp4
+overall_consistency/Iron Man flying in the sky-0.mp4
+spatial_relationship/a microwave on the bottom of an oven, front view-0.mp4
+spatial_relationship/a skateboard on the bottom of a surfboard, front view-0.mp4
+subject_consistency/an elephant taking a peaceful walk-0.mp4
+subject_consistency/a horse galloping across an open field-0.mp4

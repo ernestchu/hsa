@@ -1,3 +1,10 @@
-# HSA Cache
+# HSA Cache project page
 
-Code would be released
+Download the entire repo upfront to skip video loading
+
+```
+git clone https://github.com/ernestchu/hsa
+cd hsa
+git checkout gh-pages
+npx -y serve
+```
