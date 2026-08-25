@@ -35,29 +35,20 @@
         <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 leading-tight">
           Not All Tokens Need 40 Steps: Heterogeneous Step Allocation in Diffusion Transformers for Efficient Video Generation
         </h1>
-
-        <div class="flex flex-col gap-4 mt-2">
-          <div class="flex flex-wrap justify-center gap-6 text-lg md:text-xl font-medium">
-            <a href="https://www.cs.jhu.edu/~schu23/" target="_blank" class="text-blue-800 hover:text-blue-600 transition-colors">Ernie Chu</a>
-            <a href="https://engineering.jhu.edu/vpatel36/vishal-patel/" target="_blank" class="text-blue-800 hover:text-blue-600 transition-colors">Vishal M. Patel</a>
-          </div>
-          <div class="flex justify-center mt-2">
-            <img src="jhu-logo.jpg" alt="Johns Hopkins University" class="h-16 md:h-20 object-contain" />
-          </div>
-        </div>
         <p class="text-slate-700 text-sm md:text-base leading-relaxed text-justify">
           <strong>TL;DR</strong> Human vision ignores vast amounts of redundant motion. Why, then, do video generators treat every spatiotemporal token with equal priority? We propose HSA that assigns varying step budgets to different spatiotemporal tokens.
         </p>
 
         <div class="border border-green-500 p-4 text-left rounded-lg shadow-sm">
           <p class="text-slate-800 text-sm md:text-base mb-3">
-            <strong>Tip:</strong> Download the entire website upfront to skip video loading (need <a href="https://nodejs.org" target="_blank" class="text-blue-800 hover:underline">node</a>):
+            <strong>Tip:</strong> Download the entire website upfront to skip video loading (need <a href="https://nodejs.org" target="_blank" class="text-blue-800 hover:underline">node</a> and <a href="https://huggingface.co/docs/hub/en/xet/using-xet-storage" target="_blank" class="text-blue-800 hover:underline">git-xet</a>):
           </p>
           <div class="relative bg-green-50 rounded-md p-3 mb-3 group">
-            <button class="absolute top-2 right-2 border border-green-500 text-green-500 hover:text-white hover:bg-green-500 rounded px-2 py-1 text-xs transition-colors opacity-0 group-hover:opacity-100" onclick="navigator.clipboard.writeText('git clone git clone https://github.com/ernestchu/hsa\ncd hsa\ngit checkout gh-pages\nnpx -y serve'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 2000)">
+            <button class="absolute top-2 right-2 border border-green-500 text-green-500 hover:text-white hover:bg-green-500 rounded px-2 py-1 text-xs transition-colors opacity-0 group-hover:opacity-100" onclick="navigator.clipboard.writeText('git lfs install\ngit clone git clone https://github.com/ernestchu/hsa\ncd hsa\ngit checkout gh-pages\nnpx -y serve'); this.innerText='Copied!'; setTimeout(() => this.innerText='Copy', 2000)">
               Copy
             </button>
-            <pre class="text-sm font-mono overflow-x-auto"><code>git clone https://github.com/ernestchu/hsa
+            <pre class="text-sm font-mono overflow-x-auto"><code>git lfs install
+git clone https://github.com/ernestchu/hsa
 cd hsa
 git checkout gh-pages
 cd ..
@@ -142,7 +133,7 @@ npx -y serve</code></pre>
         <!-- Acceleration Toggle -->
         <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
           <span class="px-2 text-xs font-bold">Runtime</span>
-          <button v-for="acc in ['25', '50', '75']" :key="acc" @click="setAcceleration(acc)"
+          <button v-for="acc in ['25', '50']" :key="acc" @click="setAcceleration(acc)"
                   :class="acceleration === acc ? 'bg-blue-800 text-white shadow-md' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'"
                   class="px-3 py-1 text-xs rounded font-bold transition-all duration-200">
             {{ acc }}%

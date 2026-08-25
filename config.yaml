@@ -28,6 +28,17 @@ i2v:
       - TeaCache
       - HSA (Ours)
 t2av:
+  - id: h3
+    name: MiniMax-H3
+    link: https://huggingface.co/MiniMaxAI/MiniMax-H3
+    paths:
+      - fm
+      - hsa
+      - spectrum
+    labels:
+      - Flow Matching
+      - HSA (Ours)
+      - HSA+Spectrum
   - id: ltx2
     name: LTX-2
     link: https://huggingface.co/Lightricks/LTX-2
@@ -38,6 +49,17 @@ t2av:
       - Flow Matching
       - HSA (Ours)
 i2av:
+  - id: h3
+    name: MiniMax-H3
+    link: https://huggingface.co/MiniMaxAI/MiniMax-H3
+    paths:
+      - fm
+      - hsa
+      - spectrum
+    labels:
+      - Flow Matching
+      - HSA (Ours)
+      - HSA+Spectrum
   - id: ltx2
     name: LTX-2
     link: https://huggingface.co/Lightricks/LTX-2
